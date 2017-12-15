@@ -1,0 +1,603 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS Time Monitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: #f5f5f7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e5e5e7;
+      transition: transform 0.2s ease;
+    }
+
+    .card:active {
+      transform: scale(0.98);
+    }
+
+    .card.active {
+      border-color: #34c759;
+      background: linear-gradient(135deg, #ffffff 0%, #f0fff4 100%);
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .badge.idle {
+      background: #f5f5f7;
+      color: #8e8e93;
+    }
+
+    .badge.running {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .timer {
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-value {
+      color: #1d1d1f;
+      font-weight: 600;
+    }
+
+    .stat-label {
+      color: #86868b;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-delete {
+      background: #ff3b30;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-delete:hover {
+      opacity: 0.9;
+    }
+
+    .btn-delete:active {
+      opacity: 0.7;
+    }
+
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .connection-dot.connected {
+      background: #34c759;
+      box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.2);
+    }
+
+    .connection-dot.disconnected {
+      background: #ff3b30;
+      box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.2);
+    }
+
+    .header-card {
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid #e5e5e7;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e5e5e7;
+    }
+
+    .history-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f5f5f7;
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .action-start {
+      color: #34c759;
+      font-weight: 600;
+    }
+
+    .action-stop {
+      color: #ff3b30;
+      font-weight: 600;
+    }
+
+    .time-ago {
+      color: #86868b;
+      font-size: 12px;
+    }
+
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+      background: #ffffff;
+      border-radius: 20px;
+    }
+
+    .pos-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .pos-icon.active {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .pos-icon.idle {
+      background: #f5f5f7;
+      color: #8e8e93;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Header -->
+    <div class="header-card p-6 mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">POS Time Monitor</h1>
+          <p class="text-gray-500 text-sm mt-1">Sistem Monitoring Produksi</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="connection-dot" id="connectionDot"></span>
+          <span class="text-sm text-gray-500" id="connectionText">Connecting...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-3 gap-3 mb-6">
+      <div class="card p-4 text-center">
+        <div class="text-2xl font-bold text-green-600" id="totalActive">0</div>
+        <div class="stat-label mt-1">POS Aktif</div>
+      </div>
+      <div class="card p-4 text-center">
+        <div class="text-2xl font-bold text-gray-900" id="totalSessions">0</div>
+        <div class="stat-label mt-1">Total Sesi</div>
+      </div>
+      <div class="card p-4 text-center">
+        <div class="text-2xl font-bold text-gray-900" id="totalTime">0 detik</div>
+        <div class="stat-label mt-1">Total Durasi</div>
+      </div>
+    </div>
+
+    <!-- POS Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6" id="posContainer">
+      <!-- POS cards will be generated here -->
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-center gap-3 mb-6">
+      <button class="btn-delete" onclick="showClearModal()">
+        Hapus Semua Data
+      </button>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card p-4">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Aktivitas Terakhir</h2>
+      <div id="historyList">
+        <div class="text-center text-gray-400 py-8">
+          Belum ada aktivitas
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Confirmation Modal -->
+  <div id="clearModal" class="fixed inset-0 modal-overlay hidden items-center justify-center z-50">
+    <div class="modal-content p-6 w-80 text-center">
+      <div class="text-6xl mb-4">🗑️</div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">Hapus Semua Data?</h3>
+      <p class="text-gray-500 text-sm mb-6">Semua data log dan sesi akan dihapus permanen.</p>
+      <div class="flex gap-3">
+        <button onclick="hideClearModal()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold">
+          Batal
+        </button>
+        <button onclick="clearAllData()" class="flex-1 py-3 rounded-xl bg-red-500 text-white font-semibold">
+          Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clear Success Toast -->
+  <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full text-sm font-medium hidden">
+    Data berhasil dihapus
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    // Server URL
+    const SERVER_URL = 'http://localhost:3000';
+
+    // State
+    let posStatus = {};
+    let history = [];
+    let socket = null;
+
+    // Format seconds to HH:MM:SS
+    function formatTime(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    // Format seconds to readable (Indonesian)
+    function formatDuration(seconds) {
+      if (!seconds || seconds === 0) return '0 detik';
+      if (seconds < 60) return seconds + ' detik';
+      if (seconds < 3600) {
+        const m = Math.floor(seconds / 60);
+        const d = seconds % 60;
+        return d > 0 ? m + ' menit ' + d + ' detik' : m + ' menit';
+      }
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      if (m > 0) {
+        return h + ' jam ' + m + ' menit';
+      }
+      return h + ' jam';
+    }
+
+    // Format seconds to short readable (for POS cards)
+    function formatDurationShort(seconds) {
+      if (!seconds || seconds === 0) return '0 detik';
+      if (seconds < 60) return seconds + ' detik';
+      if (seconds < 3600) {
+        const m = Math.floor(seconds / 60);
+        return m + ' menit';
+      }
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      if (m > 0) {
+        return h + ' j ' + m + ' m';
+      }
+      return h + ' jam';
+    }
+
+    // Format time ago (Indonesian)
+    function timeAgo(timestamp) {
+      const now = new Date();
+      const time = new Date(timestamp);
+      const diff = Math.floor((now - time) / 1000);
+
+      if (diff < 60) return diff + ' detik lalu';
+      if (diff < 3600) return Math.floor(diff / 60) + ' menit lalu';
+      if (diff < 86400) return Math.floor(diff / 3600) + ' jam lalu';
+      return time.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    // Initialize POS cards
+    function initPOSCards() {
+      const container = document.getElementById('posContainer');
+      container.innerHTML = '';
+
+      for (let i = 1; i <= 5; i++) {
+        posStatus[i] = {
+          active: false,
+          start_time: null,
+          elapsed_seconds: 0,
+          sessions_today: 0,
+          total_seconds_today: 0
+        };
+
+        const card = document.createElement('div');
+        card.className = 'card p-5';
+        card.id = `pos-card-${i}`;
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="pos-icon idle" id="pos-icon-${i}">${i}</div>
+              <div>
+                <div class="font-semibold text-gray-900">POS ${i}</div>
+                <div class="badge idle" id="badge-${i}">IDLE</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center py-4">
+            <div class="timer text-4xl font-bold text-gray-900" id="timer-${i}">00:00:00</div>
+          </div>
+
+          <div class="divider mb-4"></div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="text-center">
+              <div class="stat-value" id="sessions-${i}">0</div>
+              <div class="stat-label">Sesi</div>
+            </div>
+            <div class="text-center">
+              <div class="stat-value" id="totaltime-${i}">0 detik</div>
+              <div class="stat-label">Total</div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    // Update single POS card
+    function updatePOSCard(posId) {
+      const data = posStatus[posId];
+      const card = document.getElementById(`pos-card-${posId}`);
+      const icon = document.getElementById(`pos-icon-${posId}`);
+      const badge = document.getElementById(`badge-${posId}`);
+      const timer = document.getElementById(`timer-${posId}`);
+      const sessions = document.getElementById(`sessions-${posId}`);
+      const totaltime = document.getElementById(`totaltime-${posId}`);
+
+      if (data.active) {
+        card.classList.add('active');
+        icon.className = 'pos-icon active';
+        badge.className = 'badge running';
+        badge.textContent = 'RUNNING';
+        timer.classList.remove('text-gray-900');
+        timer.classList.add('text-green-600');
+      } else {
+        card.classList.remove('active');
+        icon.className = 'pos-icon idle';
+        badge.className = 'badge idle';
+        badge.textContent = 'IDLE';
+        timer.classList.remove('text-green-600');
+        timer.classList.add('text-gray-900');
+      }
+
+      timer.textContent = formatTime(data.elapsed_seconds);
+      sessions.textContent = data.sessions_today;
+      totaltime.textContent = formatDurationShort(data.total_seconds_today);
+    }
+
+    // Update summary
+    function updateSummary() {
+      let active = 0, sessions = 0, time = 0;
+
+      for (let i = 1; i <= 5; i++) {
+        if (posStatus[i].active) active++;
+        sessions += posStatus[i].sessions_today;
+        time += posStatus[i].total_seconds_today;
+      }
+
+      document.getElementById('totalActive').textContent = active;
+      document.getElementById('totalSessions').textContent = sessions;
+      document.getElementById('totalTime').textContent = formatDuration(time);
+    }
+
+    // Update history list
+    function updateHistory() {
+      const container = document.getElementById('historyList');
+
+      if (history.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-400 py-8">Belum ada aktivitas</div>';
+        return;
+      }
+
+      container.innerHTML = history.slice(0, 10).map(item => `
+        <div class="history-item flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+              ${item.action === 'START' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
+              ${item.pos_id}
+            </div>
+            <div>
+              <div>
+                <span class="action-${item.action.toLowerCase()}">${item.action}</span>
+                <span class="text-gray-500">POS ${item.pos_id}</span>
+              </div>
+            </div>
+          </div>
+          <div class="time-ago">${timeAgo(item.timestamp)}</div>
+        </div>
+      `).join('');
+    }
+
+    // Connect to socket.io
+    function connectSocket() {
+      socket = io(SERVER_URL, {
+        transports: ['polling', 'websocket'],
+        timeout: 5000,
+        reconnection: true,
+        reconnectionDelay: 1000
+      });
+
+      socket.on('connect', () => {
+        document.getElementById('connectionDot').className = 'connection-dot connected';
+        document.getElementById('connectionText').textContent = 'Connected';
+        fetchStatus();
+        fetchHistory();
+      });
+
+      socket.on('disconnect', () => {
+        document.getElementById('connectionDot').className = 'connection-dot disconnected';
+        document.getElementById('connectionText').textContent = 'Disconnected';
+      });
+
+      socket.on('update', (data) => {
+        handleUpdate(data);
+      });
+    }
+
+    // Fetch initial status
+    async function fetchStatus() {
+      try {
+        const response = await fetch(`${SERVER_URL}/api/sessions`);
+        const status = await response.json();
+
+        for (let i = 1; i <= 5; i++) {
+          if (status[i]) {
+            posStatus[i] = status[i];
+            updatePOSCard(i);
+          }
+        }
+        updateSummary();
+      } catch (error) {
+        console.log('Error fetching status');
+      }
+    }
+
+    // Fetch history
+    async function fetchHistory() {
+      try {
+        const response = await fetch(`${SERVER_URL}/api/history`);
+        history = await response.json();
+        updateHistory();
+      } catch (error) {
+        console.log('Error fetching history');
+      }
+    }
+
+    // Handle update from server
+    function handleUpdate(data) {
+      const { pos_id, action, timestamp } = data;
+
+      // Add to history
+      history.unshift({ pos_id, action, timestamp });
+      updateHistory();
+
+      if (action === 'START') {
+        posStatus[pos_id].active = true;
+        posStatus[pos_id].start_time = timestamp;
+        posStatus[pos_id].elapsed_seconds = 0;
+      } else if (action === 'STOP') {
+        posStatus[pos_id].active = false;
+        posStatus[pos_id].sessions_today++;
+      }
+
+      updatePOSCard(pos_id);
+      updateSummary();
+
+      // Refresh state from server to keep total durations accurate
+      fetchStatus();
+    }
+
+    // Update timers every second
+    function updateTimers() {
+      let hasChange = false;
+
+      for (let i = 1; i <= 5; i++) {
+        if (posStatus[i].active && posStatus[i].start_time) {
+          const start = new Date(posStatus[i].start_time);
+          const now = new Date();
+          const elapsed = Math.floor((now - start) / 1000);
+
+          const delta = elapsed - posStatus[i].elapsed_seconds;
+          if (delta !== 0) {
+            posStatus[i].elapsed_seconds = elapsed;
+            posStatus[i].total_seconds_today = (posStatus[i].total_seconds_today || 0) + delta;
+            document.getElementById(`timer-${i}`).textContent = formatTime(elapsed);
+            document.getElementById(`totaltime-${i}`).textContent = formatDurationShort(posStatus[i].total_seconds_today);
+            hasChange = true;
+          }
+        }
+      }
+
+      if (hasChange) {
+        updateSummary();
+      }
+    }
+
+    // Clear modal functions
+    function showClearModal() {
+      document.getElementById('clearModal').classList.remove('hidden');
+      document.getElementById('clearModal').classList.add('flex');
+    }
+
+    function hideClearModal() {
+      document.getElementById('clearModal').classList.add('hidden');
+      document.getElementById('clearModal').classList.remove('flex');
+    }
+
+    // Clear all data
+    async function clearAllData() {
+      hideClearModal();
+
+      try {
+        // Clear via API - we need to add this endpoint
+        const response = await fetch(`${SERVER_URL}/api/clear`, { method: 'POST' });
+
+        if (response.ok) {
+          // Reset local state
+          for (let i = 1; i <= 5; i++) {
+            posStatus[i] = {
+              active: false,
+              start_time: null,
+              elapsed_seconds: 0,
+              sessions_today: 0,
+              total_seconds_today: 0
+            };
+            updatePOSCard(i);
+          }
+          history = [];
+          updateHistory();
+          updateSummary();
+
+          // Show toast
+          const toast = document.getElementById('toast');
+          toast.classList.remove('hidden');
+          setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+      } catch (error) {
+        console.log('Error clearing data');
+      }
+    }
+
+    // Initialize
+    initPOSCards();
+    connectSocket();
+
+    // Timers
+    setInterval(updateTimers, 1000);
+    setInterval(fetchStatus, 5000);
+    setInterval(fetchHistory, 10000);
+
+    // Close modal on outside click
+    document.getElementById('clearModal').addEventListener('click', (e) => {
+      if (e.target.id === 'clearModal') hideClearModal();
+    });
+  </script>
+</body>
+</html>

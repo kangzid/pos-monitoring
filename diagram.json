@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "author": "Zidan Alfian",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "start1",
+      "top": -180,
+      "left": -220,
+      "attrs": { "color": "green", "xray": "1", "label": "START1" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "stop1",
+      "top": -180,
+      "left": -120,
+      "attrs": { "color": "red", "xray": "1", "label": "STOP1" }
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "start2",
+      "top": -100,
+      "left": -220,
+      "attrs": { "color": "green", "xray": "1", "label": "START2" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "stop2",
+      "top": -100,
+      "left": -120,
+      "attrs": { "color": "red", "xray": "1", "label": "STOP2" }
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "start3",
+      "top": -20,
+      "left": -220,
+      "attrs": { "color": "green", "xray": "1", "label": "START3" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "stop3",
+      "top": -20,
+      "left": -120,
+      "attrs": { "color": "red", "xray": "1", "label": "STOP3" }
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "start4",
+      "top": 60,
+      "left": -220,
+      "attrs": { "color": "green", "xray": "1", "label": "START4" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "stop4",
+      "top": 60,
+      "left": -120,
+      "attrs": { "color": "red", "xray": "1", "label": "STOP4" }
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "start5",
+      "top": 140,
+      "left": -220,
+      "attrs": { "color": "green", "xray": "1", "label": "START5" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "stop5",
+      "top": 140,
+      "left": -120,
+      "attrs": { "color": "red", "xray": "1", "label": "STOP5" }
+    }
+  ],
+
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+
+    [ "start1:1.l", "esp:13", "green", [ "v0" ] ],
+    [ "start1:2.l", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "stop1:1.l", "esp:12", "red", [ "v0" ] ],
+    [ "stop1:2.l", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "start2:1.l", "esp:14", "green", [ "v0" ] ],
+    [ "start2:2.l", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "stop2:1.l", "esp:27", "red", [ "v0" ] ],
+    [ "stop2:2.l", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "start3:1.l", "esp:26", "green", [ "v0" ] ],
+    [ "start3:2.l", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "stop3:1.l", "esp:25", "red", [ "v0" ] ],
+    [ "stop3:2.l", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "start4:1.l", "esp:33", "green", [ "v0" ] ],
+    [ "start4:2.l", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "stop4:1.l", "esp:32", "red", [ "v0" ] ],
+    [ "stop4:2.l", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "start5:1.l", "esp:23", "green", [ "v0" ] ],
+    [ "start5:2.l", "esp:GND.1", "black", [ "h0" ] ],
+
+    [ "stop5:1.l", "esp:22", "red", [ "v0" ] ],
+    [ "stop5:2.l", "esp:GND.1", "black", [ "h0" ] ]
+  ],
+
+  "dependencies": {}
+}

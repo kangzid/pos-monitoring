@@ -156,6 +156,6 @@ npm start
 
 ## Author
 
-**Zidan Alfian**
+**zalfyan**
 - Sistem Monitoring Produksi 5 POS
 - ESP32 + Node.js + MySQL
